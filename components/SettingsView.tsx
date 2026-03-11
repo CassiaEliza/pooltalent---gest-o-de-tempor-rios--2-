@@ -82,12 +82,12 @@ export const SettingsView: React.FC = () => {
   };
 
   const notificationTypes = [
-    { id: 'new_request', label: 'Novas Solicitações', desc: 'Trazendo órgão/setorial, nota de prioridade e quantidade de talentos' },
-    { id: 'status_update', label: 'Mudanças de Status', desc: 'Notifica atualizações em todos os status das solicitações' },
+    { id: 'new_request', label: 'Novas Solicitações', desc: 'Notifica sempre que houver um novo cadastro de solicitação.' },
+    { id: 'status_update', label: 'Mudanças de Status', desc: 'Notifica sobre quaisquer alterações nas solicitações.' },
     { id: 'sla_warning', label: 'SLA Próximo do Limite', desc: 'Quando uma solicitação está próxima de atingir o prazo de atendimento' },
-    { id: 'allocation_change', label: 'Alocações e Desalocações', desc: 'Trazendo nome do talento, data de início e detalhes de aprovação' },
-    { id: 'deadline_extension', label: 'Aumento de Prazo', desc: 'Solicitações de extensão de prazo realizadas pelo órgão/setorial' },
-    { id: 'performance_eval', label: 'Avaliação de Desempenho', desc: 'Enviada ao órgão e talento após desalocação (Configuração para o Órgão)' },
+    { id: 'allocation_change', label: 'Alocações e Desalocações', desc: 'A notificação é enviada quando um talento está próximo das datas de alocação ou desalocaçãoEla será enviada 5 dias antes dessas datas e também no dia oficial de alocação ou desalocação.' },
+    { id: 'deadline_extension', label: 'Aumento de Prazo', desc: 'Notifica quando houver solicitações de extensão de prazo realizadas pelo órgão/setorial' },
+    { id: 'performance_eval', label: 'Avaliação de Desempenho Pendente', desc: 'Notifica quanto a pendencias de avaliações do órgão ou talento após desalocação' },
   ];
 
   const filteredRoles = useMemo(() => {
