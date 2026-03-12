@@ -153,9 +153,9 @@ export const SettingsView: React.FC = () => {
   };
 
   const notificationTypes = [
-    { id: 'new_request', label: 'Novas Solicitações', desc: 'Trazendo órgão, nota de prioridade e quantidade de talentos' },
-    { id: 'status_update', label: 'Mudanças de Status', desc: 'Notifica atualizações em todos os status das solicitações' },
-    { id: 'sla_warning', label: 'SLA Próximo do Limite', desc: 'Quando uma solicitação está próxima de atingir o prazo de atendimento' },
+    { id: 'new_request', label: 'Novas Solicitações', desc: 'Sempre que houver registro de uma nova solicitação.' },
+    { id: 'status_update', label: 'Mudança de Status', desc: 'Notifica quando houver mudança de status das solicitações.' },
+    { id: 'sla_warning', label: 'SLA Próximo do Limite', desc: 'Quando uma solicitação está próxima de atingir o SLA definido para o atendimento das solicitações.' },
     { id: 'allocation_change', label: 'Alocações e Desalocações', desc: 'Trazendo nome do talento, data de início e detalhes de aprovação' },
     { id: 'deadline_extension', label: 'Aumento de Prazo', desc: 'Solicitações de extensão de prazo realizadas pelo órgão' },
     { id: 'performance_eval', label: 'Avaliação de Desempenho', desc: 'Enviada ao órgão e talento após desalocação (Configuração para o Órgão)' },
@@ -572,7 +572,7 @@ export const SettingsView: React.FC = () => {
   const renderSla = () => (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-8">
-        <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center gap-3 mb-5">
           <div className="p-2 bg-emerald-50 text-emerald-600 rounded-lg">
             <Clock size={20} />
           </div>
@@ -581,13 +581,24 @@ export const SettingsView: React.FC = () => {
             <p className="text-xs text-slate-400 font-medium">Defina os prazos máximos de atendimento por nível de prioridade</p>
           </div>
         </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+         <div className="p-6 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4">
+          <div className="p-2 bg-white rounded-xl text-amber-500 h-fit shadow-sm">
+            <Info size={20} />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-amber-900">Como o SLA é utilizado?</p>
+            <p className="text-xs text-amber-700 leading-relaxed mt-1">
+              Estes prazos são utilizados para calcular alertas e informações nos indicadores. 
+              Solicitações que ultrapassarem 80% do tempo definido entrarão em estado de atenção.
+            </p>
+          </div>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-7">
           <div className="space-y-6 p-6 bg-slate-50/50 rounded-2xl border border-slate-100">
             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Prioridade Baixa</h4>
             <div className="space-y-4">
               <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Baixo Impacto / Baixa Urgência (Dias)</label>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Informe a quantidade de Dias a serem considerados:</label>
                 <input 
                   type="number" 
                   value={slaSettings.low_low}
@@ -595,8 +606,13 @@ export const SettingsView: React.FC = () => {
                   className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Baixo Impacto / Alta Urgência (Dias)</label>
+            </div>
+          </div>
+          <div className="space-y-6 p-6 bg-slate-50/50 rounded-2xl border border-slate-100">
+            <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Prioridade Média</h4>
+            <div className="space-y-4">
+             <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Informe a quantidade de Dias a serem considerados:</label>
                 <input 
                   type="number" 
                   value={slaSettings.low_high}
@@ -606,12 +622,11 @@ export const SettingsView: React.FC = () => {
               </div>
             </div>
           </div>
-
           <div className="space-y-6 p-6 bg-slate-50/50 rounded-2xl border border-slate-100">
             <h4 className="text-xs font-black text-slate-400 uppercase tracking-widest mb-4">Prioridade Alta</h4>
             <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Alto Impacto / Baixa Urgência (Dias)</label>
+             <div>
+                <label className="block text-xs font-bold text-slate-600 mb-1">Informe a quantidade de Dias a serem considerados:</label>
                 <input 
                   type="number" 
                   value={slaSettings.high_low}
@@ -619,31 +634,11 @@ export const SettingsView: React.FC = () => {
                   className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
                 />
               </div>
-              <div>
-                <label className="block text-xs font-bold text-slate-600 mb-1">Alto Impacto / Alta Urgência (Dias)</label>
-                <input 
-                  type="number" 
-                  value={slaSettings.high_high}
-                  onChange={(e) => handleSlaChange('high_high', e.target.value)}
-                  className="w-full px-4 py-2 bg-white border border-slate-200 rounded-lg text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
-                />
-              </div>
             </div>
           </div>
         </div>
 
-        <div className="p-6 bg-amber-50 border border-amber-100 rounded-2xl flex gap-4">
-          <div className="p-2 bg-white rounded-xl text-amber-500 h-fit shadow-sm">
-            <Info size={20} />
-          </div>
-          <div>
-            <p className="text-sm font-bold text-amber-900">Como o SLA é utilizado?</p>
-            <p className="text-xs text-amber-700 leading-relaxed mt-1">
-              Estes prazos são utilizados para calcular o status de "Atenção" e "Atraso" nos indicadores de desempenho. 
-              Solicitações que ultrapassarem 80% do tempo definido entrarão em estado de atenção.
-            </p>
-          </div>
-        </div>
+       
       </div>
 
       <div className="flex justify-end">
