@@ -6,8 +6,8 @@ import {
   BarChart3, Info, Search, Filter, Briefcase, FileText,
   User as UserIcon, CheckCircle2
 } from 'lucide-react';
-import { MacroCompetency } from '../types';
-import { INITIAL_TALENTS } from '../constants';
+import { MacroCompetency } from '@/types';
+import { INITIAL_TALENTS } from '@/constants';
 
 const MACRO_COMPETENCIES: MacroCompetency[] = [
   {

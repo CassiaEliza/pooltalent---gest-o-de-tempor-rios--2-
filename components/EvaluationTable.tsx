@@ -5,8 +5,8 @@ import {
   ChevronUp, ChevronDown, User, Building2, 
   Clock, AlertCircle, ChevronLeft, ChevronRight
 } from 'lucide-react';
-import { EVALUATIONS_MOCK } from '../constants';
-import { Evaluation } from '../types';
+import { EVALUATIONS_MOCK } from '@/constants';
+import { Evaluation } from '@/types';
 
 interface EvaluationTableProps {
   onSelectEvaluation: (evaluation: Evaluation) => void;

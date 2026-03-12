@@ -8,7 +8,7 @@ import {
   MapPin, Briefcase, FileText, Timer, AlertCircle
 } from 'lucide-react';
 import { PieChart, Pie, Cell, ResponsiveContainer, Tooltip as RechartsTooltip } from 'recharts';
-import { RequestItem } from '../types';
+import { RequestItem } from '@/types';
 import { NewRequestForm } from './NewRequestForm';
 import { SectorDetailsView } from './SectorDetailsView';
 import { ViewRequestDetail } from './ViewRequestDetail';

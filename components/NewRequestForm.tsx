@@ -9,7 +9,7 @@ import {
 // availability options for a cargo selected within a support type
 // (matches the values stored in constants for role objects)
 type RoleAvailability = 'Projeto' | 'Operação' | 'Operação e Projeto';
-import { INITIAL_SUPPORT_TYPES, MASTER_ROLES, FUNCTIONS, COMPETENCIES } from '../constants';
+import { INITIAL_SUPPORT_TYPES, MASTER_ROLES, FUNCTIONS, COMPETENCIES } from '@/constants';
 import { Label, Input, Select, TextArea, Section } from './FormComponents';
 
 interface NewRequestFormProps {

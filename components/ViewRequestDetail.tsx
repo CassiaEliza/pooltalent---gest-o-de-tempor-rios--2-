@@ -4,10 +4,10 @@ import {
   ArrowLeft, ChevronRight, Home, ChevronUp, ChevronDown, 
   Edit3, Check, X, Info, Search, Paperclip, CheckCircle2
 } from 'lucide-react';
-import { RequestItem } from '../types';
+import { RequestItem } from '@/types';
 import { NewRequestForm } from './NewRequestForm';
 import { Section, Label } from './FormComponents';
-import { INITIAL_SUPPORT_TYPES } from '../constants';
+import { INITIAL_SUPPORT_TYPES } from '@/constants';
 
 interface ViewRequestDetailProps {
   request: RequestItem;

@@ -1,7 +1,7 @@
 
 import React from 'react';
 import { X, Calendar, Briefcase, Star, Clock, User, Download, Send, CheckCircle2, AlertCircle, Building2 } from 'lucide-react';
-import { Evaluation } from '../types';
+import { Evaluation } from '@/types';
 
 interface EvaluationDetailProps {
   evaluation: Evaluation;

@@ -7,7 +7,7 @@ import {
   ArrowLeft, Check, Info, Power, Eye, EyeOff, Tag
 } from 'lucide-react';
 
-import { MASTER_ROLES, INITIAL_SUPPORT_TYPES } from '../constants';
+import { MASTER_ROLES, INITIAL_SUPPORT_TYPES } from '@/constants';
 
 type SettingsTab = 'notifications' | 'access' | 'support_types' | 'sla';
 

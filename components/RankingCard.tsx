@@ -1,7 +1,7 @@
 
 import React, { useMemo } from 'react';
 import { ExternalLink, TrendingUp, Star, ChevronRight } from 'lucide-react';
-import { RANKING_ITEMS } from '../constants';
+import { RANKING_ITEMS } from '@/constants';
 
 export const RankingCard: React.FC<{ period: string }> = ({ period }) => {
   // Simulate data variation based on period

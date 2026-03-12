@@ -12,7 +12,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, 
   Tooltip, ResponsiveContainer, ReferenceLine 
 } from 'recharts';
-import { INITIAL_TALENTS } from '../constants';
+import { INITIAL_TALENTS } from '@/constants';
 
 const SUMMARY_STATS = [
   { label: 'Total de Talentos', value: 36, icon: Users, color: 'text-indigo-600', bgColor: 'bg-indigo-50', sub: 'profissionais' },

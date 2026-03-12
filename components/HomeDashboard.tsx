@@ -7,7 +7,7 @@ import {
   Star, TrendingUp, Search,
   ExternalLink, ArrowUpDown, Check
 } from 'lucide-react';
-import { RANKING_ITEMS } from '../constants';
+import { RANKING_ITEMS } from '@/constants';
 
 const MOCK_REQUESTS = [
   { id: '#001', gomap: 'SOL-24.001', title: 'Desenvolvedor Java Pleno', description: 'Atuação no desenvolvimento do back-end do sistema de gestão tributária estadual utilizando Spring Boot e Microservices.', org: 'SUTIC', date: '12/12/2024', start: '15/12/2024', end: '15/06/2025', status: 'Em Andamento', talents: 3 },

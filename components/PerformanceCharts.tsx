@@ -3,7 +3,7 @@ import React from 'react';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, ResponsiveContainer, Tooltip, Legend
 } from 'recharts';
-import { TIMELINE_DATA } from '../constants';
+import { TIMELINE_DATA } from '@/constants';
 import { RankingCard } from './RankingCard';
 
 export const PerformanceCharts: React.FC<{ period: string }> = ({ period }) => {

@@ -1,20 +1,20 @@
 
 import React, { useState, useCallback, useRef, useEffect, useLayoutEffect } from 'react';
 import { Sparkles, BrainCircuit, X, Calendar, Download, CheckCircle2 } from 'lucide-react';
-import { Sidebar } from './components/Sidebar';
-import { Header } from './components/Header';
-import { DashboardStats } from './components/DashboardStats';
-import { PerformanceCharts } from './components/PerformanceCharts';
-import { EvaluationTable } from './components/EvaluationTable';
-import { EvaluationDetail } from './components/EvaluationDetail';
-import { HomeDashboard } from './components/HomeDashboard';
-import { TalentPool } from './components/TalentPool';
-import { ProfessionalProfile } from './components/ProfessionalProfile';
-import { RequestsManagement } from './components/RequestsManagement';
-import { CompetencyDetailedView } from './components/CompetencyDetailedView';
-import { SettingsView } from './components/SettingsView';
-import { Footer } from './components/Footer';
-import { getPerformanceInsights } from './services/gemini';
+import { Sidebar } from '../components/Sidebar';
+import { Header } from '../components/Header';
+import { DashboardStats } from '../components/DashboardStats';
+import { PerformanceCharts } from '../components/PerformanceCharts';
+import { EvaluationTable } from '../components/EvaluationTable';
+import { EvaluationDetail } from '../components/EvaluationDetail';
+import { HomeDashboard } from '../components/HomeDashboard';
+import { TalentPool } from '../components/TalentPool';
+import { ProfessionalProfile } from '../components/ProfessionalProfile';
+import { RequestsManagement } from '../components/RequestsManagement';
+import { CompetencyDetailedView } from '../components/CompetencyDetailedView';
+import { SettingsView } from '../components/SettingsView';
+import { Footer } from '../components/Footer';
+import { getPerformanceInsights } from '../services/gemini';
 import { EVALUATIONS_MOCK } from './constants';
 import { Evaluation } from './types';
 
