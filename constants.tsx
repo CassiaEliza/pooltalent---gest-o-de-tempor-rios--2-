@@ -379,12 +379,12 @@ export const INITIAL_SUPPORT_TYPES: any[] = [
     title: 'Apoio para projeto de Dados',
     category: 'Projeto',
     roles: [
-      'Arquiteto de Big Data',
-      'Especialista em Administração de Banco de Dados',
-      'Especialista em Análise de Dados e BI',
-      'Especialista em Ciência de Dados',
-      'Especialista em Ciência de Dados – Inteligência Artificial',
-      'Especialista em Engenharia de Dados'
+      { name: 'Arquiteto de Big Data', availability: 'Projeto' },
+      { name: 'Especialista em Administração de Banco de Dados', availability: 'Projeto' },
+      { name: 'Especialista em Análise de Dados e BI', availability: 'Projeto' },
+      { name: 'Especialista em Ciência de Dados', availability: 'Projeto' },
+      { name: 'Especialista em Ciência de Dados – Inteligência Artificial', availability: 'Projeto' },
+      { name: 'Especialista em Engenharia de Dados', availability: 'Projeto' }
     ],
     active: true
   },
@@ -393,11 +393,11 @@ export const INITIAL_SUPPORT_TYPES: any[] = [
     title: 'Apoio para Transformação Digital',
     category: 'Projeto',
     roles: [
-      'Analista de Projetos de Transformação Digital',
-      'Analista de Sistemas de Informação Geográfica (SIG)',
-      'Especialista em Análise de Sistemas',
-      'Especialista em Desenvolvimento de Software',
-      'Especialista em Experiência do Usuário (UX)'
+      { name: 'Analista de Projetos de Transformação Digital', availability: 'Projeto' },
+      { name: 'Analista de Sistemas de Informação Geográfica (SIG)', availability: 'Projeto' },
+      { name: 'Especialista em Análise de Sistemas', availability: 'Projeto' },
+      { name: 'Especialista em Desenvolvimento de Software', availability: 'Projeto' },
+      { name: 'Especialista em Experiência do Usuário (UX)', availability: 'Projeto' }
     ],
     active: true
   },
@@ -406,7 +406,7 @@ export const INITIAL_SUPPORT_TYPES: any[] = [
     title: 'Apoio para Gestão de Projetos',
     category: 'Projeto',
     roles: [
-      'Especialista em Gestão de Projetos de Tecnologia da Informação e Comunicação'
+      { name: 'Especialista em Gestão de Projetos de Tecnologia da Informação e Comunicação', availability: 'Projeto' }
     ],
     active: true
   },
@@ -415,7 +415,7 @@ export const INITIAL_SUPPORT_TYPES: any[] = [
     title: 'Apoio para Gestão de Contratos',
     category: 'Projeto',
     roles: [
-      'Especialista em Especificações Técnicas e Contratos de Tecnologia da Informação e Comunicação'
+      { name: 'Especialista em Especificações Técnicas e Contratos de Tecnologia da Informação e Comunicação', availability: 'Projeto' }
     ],
     active: true
   },
@@ -424,10 +424,10 @@ export const INITIAL_SUPPORT_TYPES: any[] = [
     title: 'Apoio para Infraestrutura de TI',
     category: 'Projeto',
     roles: [
-      'Técnico em Manutenção de Equipamentos de Informática',
-      'Especialista em Monitoramento de Infraestrutura e Serviços',
-      'Especialista em Gestão de Facilities de Data Center',
-      'Especialista em Infraestrutura de Virtualização'
+      { name: 'Técnico em Manutenção de Equipamentos de Informática', availability: 'Projeto' },
+      { name: 'Especialista em Monitoramento de Infraestrutura e Serviços', availability: 'Projeto' },
+      { name: 'Especialista em Gestão de Facilities de Data Center', availability: 'Projeto' },
+      { name: 'Especialista em Infraestrutura de Virtualização', availability: 'Projeto' }
     ],
     active: true
   },
@@ -436,9 +436,9 @@ export const INITIAL_SUPPORT_TYPES: any[] = [
     title: 'Apoio para Atendimento ao Usuário',
     category: 'Operação',
     roles: [
-      'Técnico em Manutenção de Equipamentos de Informática',
-      'Especialista em Gestão de Serviços de TI',
-      'Especialista em Monitoramento de Infraestrutura e Serviços'
+      { name: 'Técnico em Manutenção de Equipamentos de Informática', availability: 'Operação' },
+      { name: 'Especialista em Gestão de Serviços de TI', availability: 'Operação' },
+      { name: 'Especialista em Monitoramento de Infraestrutura e Serviços', availability: 'Operação' }
     ],
     active: true
   },
@@ -447,7 +447,7 @@ export const INITIAL_SUPPORT_TYPES: any[] = [
     title: 'Apoio para Gestão de Contratos',
     category: 'Operação',
     roles: [
-      'Especialista em Especificações Técnicas e Contratos de Tecnologia da Informação e Comunicação'
+      { name: 'Especialista em Especificações Técnicas e Contratos de Tecnologia da Informação e Comunicação', availability: 'Operação' }
     ],
     active: true
   }

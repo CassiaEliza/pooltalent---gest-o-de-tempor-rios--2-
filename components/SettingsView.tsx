@@ -11,18 +11,46 @@ import { MASTER_ROLES, INITIAL_SUPPORT_TYPES } from '../constants';
 
 type SettingsTab = 'notifications' | 'access' | 'support_types' | 'sla';
 
+// when editing a support type we maintain a list of roles along with the
+// availability of each role (project, operation, or both). this allows the
+// administrator to configure, per role, whether it should be offered for
+// solicitações de Operação, Projeto ou Operação e Projeto.
+
+type RoleAvailability = 'Projeto' | 'Operação' | 'Operação e Projeto';
+
+interface SelectedRole {
+  name: string;
+  availability: RoleAvailability;
+}
+
+interface User {
+  id: number;
+  name: string;
+  email: string;
+  profile: string;
+  status: string;
+  lastAccess: string;
+  creationDate?: string;
+  phone?: string;
+  subProfile?: string;
+  supportTypes?: string[];
+  permissionType?: string;
+}
+
 interface SupportType {
   id: number;
   title: string;
-  roles: string[];
+  // store roles as objects so we can attach availability metadata
+  roles: SelectedRole[];
   active: boolean;
 }
 
-const MOCK_USERS = [
-  { id: 1, name: 'Maria Silva', email: 'maria.silva@gov.br', profile: 'Administrador', status: 'Ativo', lastAccess: '12/12/2024 14:30' },
-  { id: 2, name: 'João Pereira', email: 'joao.pereira@gov.br', profile: 'Setorial', status: 'Ativo', lastAccess: '11/12/2024 09:15' },
-  { id: 3, name: 'Cláudia Rocha', email: 'claudia.rocha@gov.br', profile: 'CETIC', status: 'Inativo', lastAccess: '10/11/2024 16:45' },
-  { id: 4, name: 'Ricardo Santos', email: 'ricardo.santos@gov.br', profile: 'RH da STI', status: 'Ativo', lastAccess: '12/12/2024 11:20' },
+const MOCK_USERS: User[] = [
+  { id: 1, name: 'Maria Silva', email: 'maria.silva@gov.br', profile: 'Administrador', status: 'Ativo', lastAccess: '12/12/2024 14:30', creationDate: '10/12/2024' },
+  { id: 2, name: 'João Pereira', email: 'joao.pereira@gov.br', profile: 'Órgão', status: 'Ativo', lastAccess: '11/12/2024 09:15', permissionType: 'Editar e Visualizar', creationDate: '10/12/2024' },
+  { id: 3, name: 'Cláudia Rocha', email: 'claudia.rocha@gov.br', profile: 'Visualizador Geral', status: 'Inativo', lastAccess: '10/11/2024 16:45', creationDate: '10/11/2024' },
+  { id: 4, name: 'Ricardo Santos', email: 'ricardo.santos@gov.br', profile: 'Órgão', status: 'Ativo', lastAccess: '12/12/2024 11:20', permissionType: 'Visualizar', creationDate: '09/11/2024' },
+  { id: 5, name: 'Ana Costa', email: 'ana.costa@gov.br', profile: 'RH da STI', status: 'Ativo', lastAccess: '12/12/2024 10:00', permissionType: 'Editar e Visualizar', creationDate: '09/11/2024' },
 ];
 
 const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void }) => (
@@ -42,14 +70,57 @@ const Toggle = ({ enabled, onChange }: { enabled: boolean; onChange: () => void 
 
 export const SettingsView: React.FC = () => {
   const [activeTab, setActiveTab] = useState<SettingsTab>('notifications');
-  const [supportTypes, setSupportTypes] = useState<SupportType[]>(INITIAL_SUPPORT_TYPES);
+  // convert any legacy string-based roles into the new object shape with
+  // default availability set to "Operação e Projeto" so that older data
+  // doesn't break when the component first renders.
+  const [supportTypes, setSupportTypes] = useState<SupportType[]>(
+    INITIAL_SUPPORT_TYPES.map(s => ({
+      ...s,
+      roles: (s.roles || []).map((r: any) =>
+        typeof r === 'string'
+          ? { name: r, availability: 'Operação e Projeto' as RoleAvailability }
+          : r
+      )
+    }))
+  );
+
   const [isEditingSupportType, setIsEditingSupportType] = useState(false);
   const [editingId, setEditingId] = useState<number | null>(null);
   const [formSupportType, setFormSupportType] = useState({
     title: '',
-    selectedRoles: [] as string[]
+    selectedRoles: [] as SelectedRole[]
   });
   const [roleSearch, setRoleSearch] = useState('');
+
+  // users and form state for "Acessos" tab
+  const [users, setUsers] = useState<User[]>(MOCK_USERS);
+  const [selectedUserIds, setSelectedUserIds] = useState<number[]>([]);
+  const [isEditingUser, setIsEditingUser] = useState(false);
+  const [editingUserId, setEditingUserId] = useState<number | null>(null);
+  const [formUser, setFormUser] = useState({
+    name: '',
+    email: '',
+    phone: '',
+    profile: '',
+    status: 'Ativo',
+    subProfile: '',
+    supportTypes: [] as string[],
+    permissionType: '',
+  });
+  const [supportSearch, setSupportSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+  const [profileFilter, setProfileFilter] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
+
+
+  const updateRoleAvailability = (roleName: string, availability: RoleAvailability) => {
+    setFormSupportType(prev => ({
+      ...prev,
+      selectedRoles: prev.selectedRoles.map(r =>
+        r.name === roleName ? { ...r, availability } : r
+      )
+    }));
+  };
 
   const [slaSettings, setSlaSettings] = useState({
     low_low: 15, // Baixo Impacto / Baixa Urgência
@@ -82,11 +153,11 @@ export const SettingsView: React.FC = () => {
   };
 
   const notificationTypes = [
-    { id: 'new_request', label: 'Novas Solicitações', desc: 'Trazendo órgão/setorial, nota de prioridade e quantidade de talentos' },
+    { id: 'new_request', label: 'Novas Solicitações', desc: 'Trazendo órgão, nota de prioridade e quantidade de talentos' },
     { id: 'status_update', label: 'Mudanças de Status', desc: 'Notifica atualizações em todos os status das solicitações' },
     { id: 'sla_warning', label: 'SLA Próximo do Limite', desc: 'Quando uma solicitação está próxima de atingir o prazo de atendimento' },
     { id: 'allocation_change', label: 'Alocações e Desalocações', desc: 'Trazendo nome do talento, data de início e detalhes de aprovação' },
-    { id: 'deadline_extension', label: 'Aumento de Prazo', desc: 'Solicitações de extensão de prazo realizadas pelo órgão/setorial' },
+    { id: 'deadline_extension', label: 'Aumento de Prazo', desc: 'Solicitações de extensão de prazo realizadas pelo órgão' },
     { id: 'performance_eval', label: 'Avaliação de Desempenho', desc: 'Enviada ao órgão e talento após desalocação (Configuração para o Órgão)' },
   ];
 
@@ -97,12 +168,19 @@ export const SettingsView: React.FC = () => {
   }, [roleSearch]);
 
   const toggleRoleSelection = (role: string) => {
-    setFormSupportType(prev => ({
-      ...prev,
-      selectedRoles: prev.selectedRoles.includes(role)
-        ? prev.selectedRoles.filter(r => r !== role)
-        : [...prev.selectedRoles, role]
-    }));
+    setFormSupportType(prev => {
+      const exists = prev.selectedRoles.find(r => r.name === role);
+      if (exists) {
+        return {
+          ...prev,
+          selectedRoles: prev.selectedRoles.filter(r => r.name !== role)
+        };
+      }
+      return {
+        ...prev,
+        selectedRoles: [...prev.selectedRoles, { name: role, availability: 'Operação e Projeto' }]
+      };
+    });
   };
 
   const handleStartCreate = () => {
@@ -113,9 +191,15 @@ export const SettingsView: React.FC = () => {
 
   const handleStartEdit = (support: SupportType) => {
     setEditingId(support.id);
+    // support.roles should already be SelectedRole[] but guard for legacy strings
+    const mapped = support.roles.map((r: any) =>
+      typeof r === 'string'
+        ? { name: r, availability: 'Operação e Projeto' as RoleAvailability }
+        : r
+    );
     setFormSupportType({ 
       title: support.title, 
-      selectedRoles: [...support.roles]
+      selectedRoles: mapped
     });
     setIsEditingSupportType(true);
   };
@@ -149,6 +233,85 @@ export const SettingsView: React.FC = () => {
       }]);
     }
     setIsEditingSupportType(false);
+  };
+
+  // helpers for user creation/editing
+  const toggleUserSupportType = (title: string) => {
+    setFormUser(prev => {
+      const exists = prev.supportTypes.includes(title);
+      if (exists) {
+        return { ...prev, supportTypes: prev.supportTypes.filter(t => t !== title) };
+      }
+      return { ...prev, supportTypes: [...prev.supportTypes, title] };
+    });
+  };
+
+  const handleSaveUser = () => {
+    if (editingUserId !== null) {
+      setUsers(prev =>
+        prev.map(u =>
+          u.id === editingUserId
+            ? { ...u, ...formUser }
+            : u
+        )
+      );
+    } else {
+      const newId = users.length > 0 ? Math.max(...users.map(u => u.id)) + 1 : 1;
+      const now = new Date();
+      const formattedDate = now.toLocaleString('pt-BR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+      }).replace(',', '');
+      const creationDate = new Date().toLocaleDateString('pt-BR');
+      setUsers(prev => [...prev, { id: newId, ...formUser, lastAccess: formattedDate, creationDate }]);
+    }
+    setIsEditingUser(false);
+    setEditingUserId(null);
+    setFormUser({ name: '', email: '', phone: '', profile: '', status: 'Ativo', subProfile: '', supportTypes: [], permissionType: '' });
+    setSupportSearch('');
+  };
+
+  const handleSelectUser = (userId: number) => {
+    setSelectedUserIds(prev =>
+      prev.includes(userId)
+        ? prev.filter(id => id !== userId)
+        : [...prev, userId]
+    );
+  };
+
+  const handleSelectAllUsers = () => {
+    if (selectedUserIds.length === users.length) {
+      setSelectedUserIds([]);
+    } else {
+      setSelectedUserIds(users.map(u => u.id));
+    }
+  };
+
+  const handleUpdateUserStatus = (status: 'Ativo' | 'Inativo') => {
+    setUsers(prevUsers =>
+      prevUsers.map(user =>
+        selectedUserIds.includes(user.id) ? { ...user, status } : user
+      )
+    );
+    setSelectedUserIds([]);
+  };
+
+  const handleStartEditUser = (user: User) => {
+    setEditingUserId(user.id);
+    setFormUser({
+      name: user.name,
+      email: user.email,
+      phone: user.phone || '',
+      profile: user.profile,
+      status: user.status as 'Ativo' | 'Inativo',
+      subProfile: user.subProfile || '',
+      supportTypes: user.supportTypes || [],
+      permissionType: user.permissionType,
+    });
+    setIsEditingUser(true);
   };
 
   const renderSupportForm = () => (
@@ -203,31 +366,46 @@ export const SettingsView: React.FC = () => {
 
             <div className="max-h-[500px] overflow-y-auto pr-2 custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-3">
               {filteredRoles.map((role) => {
-                const isSelected = formSupportType.selectedRoles.includes(role.name);
+                const selected = formSupportType.selectedRoles.find(r => r.name === role.name);
+                const isSelected = !!selected;
                 return (
-                  <button
+                  <div
                     key={role.name}
-                    onClick={() => toggleRoleSelection(role.name)}
                     className={`flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${
                       isSelected 
                         ? 'bg-emerald-50 border-emerald-200 text-emerald-800' 
                         : 'bg-white border-slate-100 text-slate-600 hover:bg-slate-50'
                     }`}
                   >
-                    <div className={`w-5 h-5 rounded border flex items-center justify-center transition-colors ${
-                      isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200'
-                    }`}>
+                    <div
+                      onClick={() => toggleRoleSelection(role.name)}
+                      className={`w-5 h-5 rounded border flex items-center justify-center transition-colors cursor-pointer ${
+                        isSelected ? 'bg-emerald-600 border-emerald-600 text-white' : 'bg-white border-slate-200'
+                      }`}
+                    >
                       {isSelected && <Check size={12} strokeWidth={3} />}
                     </div>
-                    <div className="flex-1">
+                    <div className="flex-1" onClick={() => toggleRoleSelection(role.name)}>
                       <span className="text-xs font-bold leading-tight block">{role.name}</span>
-                      <span className={`text-[8px] font-black uppercase tracking-widest ${
-                        role.category === 'Projeto' ? 'text-indigo-500' : 'text-amber-500'
-                      }`}>
-                        {role.category}
-                      </span>
+                      {isSelected && (
+                        <span className="text-[8px] font-black uppercase tracking-widest">
+                          {selected!.availability}
+                        </span>
+                      )}
                     </div>
-                  </button>
+                    {isSelected && (
+                      <select
+                        value={selected!.availability}
+                        onChange={(e) => { e.stopPropagation(); updateRoleAvailability(role.name, e.target.value as any); }}
+                        className="text-[10px] bg-transparent border-none outline-none"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <option value="Operação">Operação</option>
+                        <option value="Projeto">Projeto</option>
+                        <option value="Operação e Projeto">Operação e Projeto</option>
+                      </select>
+                    )}
+                  </div>
                 );
               })}
             </div>
@@ -250,21 +428,19 @@ export const SettingsView: React.FC = () => {
               
               <div className="p-6 min-h-[120px]">
                 <div className="flex flex-wrap gap-2">
-                  {formSupportType.selectedRoles.length > 0 ? formSupportType.selectedRoles.map((roleName, idx) => {
-                    const roleData = MASTER_ROLES.find(r => r.name === roleName);
+                  {formSupportType.selectedRoles.length > 0 ? formSupportType.selectedRoles.map((r, idx) => {
+                    const roleData = MASTER_ROLES.find(rr => rr.name === r.name);
                     return (
                       <div key={idx} className="flex flex-col gap-1 px-3 py-2 bg-slate-50 text-slate-600 rounded-xl border border-slate-100">
                         <div className="flex items-center gap-2 text-[10px] font-bold">
                           <Briefcase size={10} className="text-slate-300" />
-                          {roleName}
+                          {r.name}
                         </div>
-                        {roleData && (
-                          <span className={`text-[7px] font-black uppercase tracking-widest ml-4 ${
-                            roleData.category === 'Projeto' ? 'text-indigo-500' : 'text-amber-500'
-                          }`}>
-                            {roleData.category}
+                        <div className="flex items-center gap-1">
+                          <span className="text-[7px] font-black uppercase tracking-widest">
+                            {r.availability}
                           </span>
-                        )}
+                        </div>
                       </div>
                     );
                   }) : (
@@ -355,40 +531,28 @@ export const SettingsView: React.FC = () => {
             
             <div className="p-6 flex-1 bg-white">
               <div className="flex flex-wrap gap-2">
-                {support.roles.map((roleName, idx) => {
-                  const roleData = MASTER_ROLES.find(r => r.name === roleName);
+                {support.roles.map((r, idx) => {
+                  const roleName = typeof r === 'string' ? r : r.name;
+                  const availability: RoleAvailability = typeof r === 'string' ? 'Operação e Projeto' : r.availability;
+                  const roleData = MASTER_ROLES.find(rr => rr.name === roleName);
                   return (
                     <div key={idx} className="group/role flex flex-col gap-0.5 px-3 py-2 bg-slate-50 text-slate-600 rounded-xl border border-slate-100 hover:bg-blue-50 hover:border-blue-100 hover:text-blue-700 transition-all cursor-default">
                       <div className="flex items-center gap-2 text-[11px] font-bold">
                         <Briefcase size={12} className="text-slate-300 group-hover/role:text-blue-400" />
                         {roleName}
                       </div>
-                      {roleData && (
-                        <span className={`text-[7px] font-black uppercase tracking-widest ml-5 ${
-                          roleData.category === 'Projeto' ? 'text-indigo-500' : 'text-amber-500'
-                        }`}>
-                          {roleData.category}
+                      <div className="flex gap-2 items-center ml-5">
+                        <span className="text-[7px] font-black uppercase tracking-widest">
+                          {availability}
                         </span>
-                      )}
+                      </div>
                     </div>
                   );
                 })}
               </div>
             </div>
 
-            <div className="px-6 py-4 bg-slate-50/50 border-t border-slate-100 flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <button 
-                  onClick={() => handleStartEdit(support)}
-                  className="text-[11px] font-bold text-slate-400 hover:text-emerald-600 flex items-center gap-1 transition-colors"
-                >
-                  <Plus size={14} /> Gerenciar Cargos
-                </button>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest">ID: {support.id.toString().padStart(3, '0')}</span>
-              </div>
-            </div>
+            
           </div>
         ))}
 
@@ -504,7 +668,7 @@ export const SettingsView: React.FC = () => {
             </div>
             <div>
               <h3 className="text-lg font-bold text-slate-800">Central de Notificações</h3>
-              <p className="text-xs text-slate-400 font-medium">Configure como e onde você deseja ser alertado sobre as atividades do sistema</p>
+              <p className="text-xs text-slate-400 font-medium">Configure como e onde você deseja ser alertado.</p>
             </div>
           </div>
         </div>
@@ -515,8 +679,8 @@ export const SettingsView: React.FC = () => {
               <tr className="bg-slate-50/50 border-b border-slate-100">
                 <th className="px-8 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest">Tipo de Notificação</th>
                 <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">E-mail</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Teams</th>
-                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">No Sistema</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Microsoft Teams</th>
+                <th className="px-6 py-5 text-[10px] font-black text-slate-400 uppercase tracking-widest text-center">Push</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
@@ -565,8 +729,7 @@ export const SettingsView: React.FC = () => {
               <p className="text-xs font-bold text-slate-600">Dica de Configuração</p>
               <p className="text-[11px] text-slate-500 leading-relaxed mt-1">
                 Você pode desativar todos os canais de um tipo de notificação para silenciá-la completamente. 
-                As notificações do Teams requerem que o bot do sistema esteja instalado em seu workspace.
-              </p>
+                </p>
             </div>
           </div>
         </div>
@@ -578,13 +741,17 @@ export const SettingsView: React.FC = () => {
           className="flex items-center gap-2 px-8 py-3.5 bg-[#065f46] text-white rounded-2xl font-bold shadow-lg shadow-emerald-100 hover:bg-[#064e3b] transition-all active:scale-95"
         >
           <Save size={18} />
-          Salvar Preferências Unificadas
+          Salvar
         </button>
       </div>
     </div>
   );
 
-  const renderAccess = () => (
+  const renderAccess = () => {
+    if (isEditingUser || editingUserId !== null) {
+      return renderUserForm();
+    }
+    return (
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm">
         <div className="flex items-center gap-3 mb-6">
@@ -597,16 +764,16 @@ export const SettingsView: React.FC = () => {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
           {[
-            { name: 'Administrador', desc: 'Superintendentes, Subsecretários e Escritório de Projetos', color: 'bg-emerald-600' },
-            { name: 'Setorial', desc: 'Responsáveis pela solicitação e RH da setorial solicitante', color: 'bg-slate-100' },
-            { name: 'CETIC', desc: 'Gerência de Infraestrutura e Governança de Redes', color: 'bg-slate-100' },
-            { name: 'RH da STI', desc: 'Gestão de Pessoas da Subsecretaria de Tecnologia', color: 'bg-slate-100' },
+            { name: 'Administrador', desc: 'Superintendentes, Subsecretários e Escritório de Projetos', color: 'bg-emerald-600 text-white' },
+            { name: 'Órgão', desc: 'Responsáveis pela solicitação e RH do órgão solicitante', color: 'bg-blue-100 text-blue-800' },
+            { name: 'RH da STI', desc: 'Gestão de Pessoas da Subsecretaria de Tecnologia', color: 'bg-purple-100 text-purple-800' },
+            { name: 'Visualizador Geral', desc: 'Acesso àqueles que somente irão acompanhar e visualizar', color: 'bg-slate-100 text-slate-800' },
           ].map((profile) => (
-            <div key={profile.name} className="p-5 border border-slate-100 rounded-2xl bg-slate-50/30">
+            <div key={profile.name} className="p-6 border border-slate-100 rounded-2xl bg-slate-50/30">
               <span className={`inline-block px-3 py-1 rounded-lg text-[10px] font-bold mb-3 ${
-                profile.color === 'bg-emerald-600' ? 'bg-emerald-600 text-white' : 'bg-white border border-slate-200 text-slate-500'
+                profile.color
               }`}>
                 {profile.name}
               </span>
@@ -622,32 +789,72 @@ export const SettingsView: React.FC = () => {
             <h3 className="text-lg font-bold text-slate-800">Usuários com Acesso</h3>
             <p className="text-xs text-slate-400 font-medium">Gerencie os usuários que têm acesso ao sistema</p>
           </div>
-          <button className="flex items-center gap-2 px-5 py-2.5 bg-[#065f46] text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-100 hover:bg-[#064e3b] transition-all">
-            <Plus size={18} />
-            Adicionar Usuário
-          </button>
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => setIsEditingUser(true)}
+              className="flex items-center gap-2 px-5 py-2.5 bg-[#065f46] text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-100 hover:bg-[#064e3b] transition-all"
+            >
+              <Plus size={18} />
+              Adicionar Usuário
+            </button>
+            <button
+              onClick={() => handleUpdateUserStatus('Inativo')}
+              disabled={selectedUserIds.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-rose-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-rose-100 hover:bg-rose-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <EyeOff size={16} />
+              Inativar
+            </button>
+            <button
+              onClick={() => handleUpdateUserStatus('Ativo')}
+              disabled={selectedUserIds.length === 0}
+              className="flex items-center gap-2 px-4 py-2 bg-emerald-600 text-white rounded-xl font-bold text-xs shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Eye size={16} />
+              Ativar
+            </button>
+          </div>
         </div>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead className="bg-slate-50/50 text-[10px] font-bold text-slate-400 uppercase tracking-widest border-b border-slate-100">
               <tr>
+                <th className="px-4 py-4 w-12 text-center cursor-pointer" onClick={handleSelectAllUsers}>
+                  <input
+                    type="checkbox"
+                    readOnly
+                    checked={selectedUserIds.length === users.length}
+                    className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                  />
+                </th>
                 <th className="px-8 py-4">Nome</th>
                 <th className="px-8 py-4">E-mail</th>
                 <th className="px-8 py-4">Perfil</th>
                 <th className="px-8 py-4">Status</th>
                 <th className="px-8 py-4">Último Acesso</th>
-                <th className="px-8 py-4 text-center">Ações</th>
+                <th className="px-8 py-4">Data de criação</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-50">
-              {MOCK_USERS.map((user) => (
-                <tr key={user.id} className="hover:bg-slate-50/30 transition-colors">
+              {users.map((user) => (
+                <tr key={user.id} onClick={() => handleStartEditUser(user)} className={`transition-colors cursor-pointer ${selectedUserIds.includes(user.id) ? 'bg-emerald-50' : 'hover:bg-slate-50/30'}`}>
+                  <td className="px-4 py-5 w-12 text-center cursor-pointer" onClick={(e) => { e.stopPropagation(); handleSelectUser(user.id); }}>
+                    <input
+                      type="checkbox"
+                      readOnly
+                      checked={selectedUserIds.includes(user.id)}
+                      className="h-4 w-4 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500"
+                    />
+                  </td>
                   <td className="px-8 py-5 text-sm font-bold text-slate-800">{user.name}</td>
                   <td className="px-8 py-5 text-sm text-slate-500">{user.email}</td>
                   <td className="px-8 py-5">
                     <span className={`px-3 py-1 rounded-lg text-[10px] font-bold ${
-                      user.profile === 'Administrador' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'
+                      user.profile === 'Administrador' ? 'bg-emerald-600 text-white' : 
+                      user.profile === 'Órgão' ? 'bg-blue-100 text-blue-800' : 
+                      user.profile === 'RH da STI' ? 'bg-purple-100 text-purple-800' :
+                      user.profile === 'Visualizador Geral' ? 'bg-slate-100 text-slate-800' : ''
                     }`}>
                       {user.profile}
                     </span>
@@ -661,20 +868,165 @@ export const SettingsView: React.FC = () => {
                     </span>
                   </td>
                   <td className="px-8 py-5 text-sm text-slate-500">{user.lastAccess}</td>
-                  <td className="px-8 py-5">
-                    <div className="flex items-center justify-center gap-4">
-                      <button className="text-slate-400 hover:text-blue-600 transition-colors">
-                        <Edit2 size={16} />
-                      </button>
-                      <button className="text-slate-400 hover:text-rose-600 transition-colors">
-                        <Trash2 size={16} />
-                      </button>
-                    </div>
-                  </td>
+                  <td className="px-8 py-5 text-sm text-slate-500">{user.creationDate}</td>
                 </tr>
               ))}
             </tbody>
           </table>
+        </div>
+      </div>
+    </div>
+    );
+  };
+
+  const renderCargosEApoios = () => (
+    <div className="space-y-4">
+      <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Cargos e Apoios</label>
+      <div className="relative w-full">
+        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-300" size={14} />
+        <input
+          type="text"
+          value={supportSearch}
+          onChange={e => setSupportSearch(e.target.value)}
+          placeholder="Pesquisar..."
+          className="w-full pl-9 pr-3 py-2 bg-slate-50 border border-slate-100 rounded-lg text-xs outline-none focus:ring-1 ring-emerald-500"
+        />
+      </div>
+      <div className="max-h-[500px] overflow-y-auto pr-2 custom-scrollbar grid grid-cols-1 md:grid-cols-2 gap-3">
+        {supportTypes
+          .filter(st => st.title.toLowerCase().includes(supportSearch.toLowerCase()))
+          .map(st => (
+            <button
+              key={st.id}
+              onClick={() => toggleUserSupportType(st.title)}
+              className={`flex items-center gap-2 p-3 rounded-xl border text-left transition-all ${
+                formUser.supportTypes.includes(st.title)
+                  ? 'border-emerald-500 bg-emerald-50'
+                  : 'border-slate-200'
+              }`}
+            >
+              {st.title}
+            </button>
+          ))}
+      </div>
+    </div>
+  );
+
+  const renderUserForm = () => (
+    <div className="animate-in slide-in-from-right duration-500 pb-20 space-y-8">
+      <div className="flex items-center gap-4">
+        <button onClick={() => { setIsEditingUser(false); setEditingUserId(null); }}
+          className="p-2.5 bg-white border border-slate-200 rounded-xl text-slate-500 hover:bg-slate-50 transition-all shadow-sm">
+          <ArrowLeft size={20} />
+        </button>
+        <div>
+          <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            {editingUserId ? 'Editar Usuário' : 'Novo Usuário'}
+          </h2>
+          <p className="text-slate-500 text-sm">Preencha as informações do usuário</p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
+        <div className="lg:col-span-7 space-y-8">
+          <div className="bg-white p-8 rounded-3xl border border-slate-200 shadow-sm space-y-8">
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Nome</label>
+              <input
+                type="text"
+                value={formUser.name}
+                onChange={e => setFormUser({ ...formUser, name: e.target.value })}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">E-mail</label>
+              <input
+                type="email"
+                value={formUser.email}
+                onChange={e => setFormUser({ ...formUser, email: e.target.value })}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Telefone</label>
+              <input
+                type="text"
+                value={formUser.phone}
+                onChange={e => setFormUser({ ...formUser, phone: e.target.value })}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
+              />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Perfil</label>
+              <select
+                value={formUser.profile}
+                onChange={e => setFormUser({ ...formUser, profile: e.target.value, subProfile: '', supportTypes: [] })}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
+              >
+                <option value="">Selecione</option>
+                <option value="Administrador">Administrador</option>
+                <option value="Órgão">Órgão</option>
+                <option value="RH da STI">RH da STI</option>
+                <option value="Visualizador Geral">Visualizador Geral</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Status</label>
+              <select
+                value={formUser.status}
+                onChange={e => setFormUser({ ...formUser, status: e.target.value })}
+                className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
+              >
+                <option value="Ativo">Ativo</option>
+                <option value="Inativo">Inativo</option>
+              </select>
+            </div>
+
+            {(formUser.profile === 'Órgão' || formUser.profile === 'RH da STI') && (
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Tipo de Permissão</label>
+                <select
+                  value={formUser.permissionType}
+                  onChange={e => setFormUser({ ...formUser, permissionType: e.target.value })}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
+                >
+                  <option value="">Selecione</option>
+                  <option value="Visualizar">Visualizar</option>
+                  <option value="Editar e Visualizar">Editar e Visualizar</option>
+                </select>
+              </div>
+            )}
+
+            {formUser.profile === 'Administrador' && (
+              <div>
+                <label className="block text-xs font-bold text-slate-400 uppercase tracking-widest mb-2">Sub‑Perfil</label>
+                <select
+                  value={formUser.subProfile}
+                  onChange={e => setFormUser({ ...formUser, subProfile: e.target.value, supportTypes: [] })}
+                  className="w-full px-4 py-3 bg-slate-50 border border-slate-200 rounded-xl text-sm outline-none focus:ring-2 ring-emerald-100 font-medium"
+                >
+                  <option value="">Selecione</option>
+                  <option value="Superintendentes">Superintendentes</option>
+                  <option value="Subsecretários">Subsecretários</option>
+                  <option value="Escritório de Projetos">Escritório de Projetos</option>
+                </select>
+              </div>
+            )}
+
+            {formUser.subProfile === 'Superintendentes' && renderCargosEApoios()}
+
+            <div className="flex justify-end pt-4">
+              <button
+                onClick={handleSaveUser}
+                disabled={!formUser.name || !formUser.email || !formUser.profile}
+                className="inline-flex items-center gap-2 px-8 py-3 bg-emerald-600 text-white rounded-xl font-bold text-sm shadow-lg shadow-emerald-100 hover:bg-emerald-700 transition-all disabled:opacity-50"
+              >
+                <Save size={16} />
+                {editingUserId ? 'Salvar Alterações' : 'Salvar Novo Usuário'}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

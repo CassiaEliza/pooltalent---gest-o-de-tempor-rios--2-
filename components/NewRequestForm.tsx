@@ -5,6 +5,10 @@ import {
   User, Building2, Target, Zap, DollarSign, Users, Clock, Paperclip,
   Search, FileText, Globe, Share2, Settings, Shield, AlertCircle, Trash2, X
 } from 'lucide-react';
+
+// availability options for a cargo selected within a support type
+// (matches the values stored in constants for role objects)
+type RoleAvailability = 'Projeto' | 'Operação' | 'Operação e Projeto';
 import { INITIAL_SUPPORT_TYPES, MASTER_ROLES, FUNCTIONS, COMPETENCIES } from '../constants';
 import { Label, Input, Select, TextArea, Section } from './FormComponents';
 
@@ -435,9 +439,9 @@ export const NewRequestForm: React.FC<NewRequestFormProps> = ({ onBack, initialD
       {/* 2. Tipo de apoio */}
       <Section id="tipoApoio" title="2. Tipo de Apoio" isOpen={sections.tipoApoio} onToggle={toggleSection}>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <Label required sub="Selecione se é para apoio em Projeto ou Operação.">Apoio em:</Label>
-            <div className="flex gap-4">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <Label required sub="Selecione se é para apoio em Projeto ou Operação.">Apoio em</Label>
+            <div className="flex gap-4 mt-2">
               {['Projeto', 'Operação'].map((type) => (
                 <button
                   key={type}
@@ -454,9 +458,9 @@ export const NewRequestForm: React.FC<NewRequestFormProps> = ({ onBack, initialD
               ))}
             </div>
           </div>
-          <div>
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
             <Label required sub="Selecione um ou mais tipos de apoio específicos desejados.">Tipo de Apoio Disponível</Label>
-            <div className="grid grid-cols-1 gap-2">
+            <div className="grid grid-cols-1 gap-2 mt-2">
               {filteredSupportTypes.length > 0 ? (
                 filteredSupportTypes.map((support) => (
                   <label 
@@ -1108,7 +1112,8 @@ export const NewRequestForm: React.FC<NewRequestFormProps> = ({ onBack, initialD
         visible={isSection2Valid}
       >
         <div className="space-y-6">
-          <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div className="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm">
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
             <div className="flex-1">
               <Label required sub="Selecione o cargo desejado para adicionar à sua solicitação.">Adicionar Cargo</Label>
               <Select 
@@ -1128,7 +1133,19 @@ export const NewRequestForm: React.FC<NewRequestFormProps> = ({ onBack, initialD
                   const selectedSupports = INITIAL_SUPPORT_TYPES.filter(s => 
                     formData.tipoApoioDisponivel.includes(s.title) && s.category === formData.tipoApoio
                   );
-                  const allowedRoles = Array.from(new Set(selectedSupports.flatMap(s => s.roles || [])));
+                  const allowedRoles = Array.from(new Set(
+                    selectedSupports.flatMap(s => 
+                      (s.roles || [])
+                        .filter((rr: any) => {
+                          const availability: RoleAvailability = rr.availability || 'Operação e Projeto';
+                          return (
+                            availability === formData.tipoApoio ||
+                            availability === 'Operação e Projeto'
+                          );
+                        })
+                        .map((rr: any) => (typeof rr === 'string' ? rr : rr.name))
+                    )
+                  ));
                   return MASTER_ROLES
                     .filter(r => allowedRoles.includes(r.name))
                     .filter(r => !formData.perfisSelecionados.find(p => p.role === r.name))
@@ -1136,6 +1153,7 @@ export const NewRequestForm: React.FC<NewRequestFormProps> = ({ onBack, initialD
                 })()}
               </Select>
             </div>
+          </div>
           </div>
 
           <div className="space-y-8">
